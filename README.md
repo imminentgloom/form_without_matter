@@ -40,7 +40,4 @@ fill1-6 + trig:     adds steps if rec is on, plays if off
   clear + shift:    clear all steps
   shift + play:     change playback direction
   shift + pattern:  save pattern
-
-
-
 ```

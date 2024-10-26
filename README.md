@@ -26,3 +26,21 @@ key 3: reset
 Controls, grid:
 
 ![form_without_matter](form_without_matter_grid.jpg)
+
+```
+loop and fill change with number of buttons held.
+
+fill1-6 + trig:     adds steps if rec is on, plays if off
+  loop1 + tracks:   repeats single steps or jumps between held
+  loop2 + tracks:   loop single track, press above or below for one step
+  loop3 + tracks:   loop all tracks, press above or below for one step
+  clear + tracks:   clear any pressed steps
+  clear + substeps: clear any pressed substeps
+  clear + pattern:  clear pattern
+  clear + shift:    clear all steps
+  shift + play:     change playback direction
+  shift + pattern:  save pattern
+
+
+
+```

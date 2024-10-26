@@ -964,7 +964,7 @@ function g_redraw()
    -- shift_2
    for x = 9, 11 do
       if shift_2 then
-         g:led(x, 8, br_shift_2 + #shift_buff_2 * 2)
+         g:led(x, 8, br_shift_2 + 4)
       else
          g:led(x, 8, br_shift_2)
       end

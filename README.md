@@ -25,4 +25,4 @@ key 3: reset
 ```
 Controls, grid:
 
-![form_without_matter](form_without_matter_grid.jpeg)
+![form_without_matter](form_without_matter_grid.jpg)

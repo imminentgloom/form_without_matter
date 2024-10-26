@@ -729,7 +729,7 @@ function g.key(x, y, z)
          if z == 1 then pattern = true else pattern = false end
       end
       
-      if pattern then
+      if pattern and not shift_2 and not erase then
          pattern_to_sequence(pattern_number)
          message = "pat. " .. pattern_number .. " load"
       end

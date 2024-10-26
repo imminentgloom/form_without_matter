@@ -24,7 +24,7 @@ local name = "form!matter"
 local g = grid.connect()
 
 local tab = require("tabutil")
-local nb = include("lib/nb")
+local nb = include("nb/lib/nb")
 
 local save_on_exit = true
 
@@ -468,7 +468,7 @@ function init()
    clk_fps = clock.run(c_fps)
 
    if save_on_exit then
-      params:read("/home/we/dust/data/" .. norns.script.shortname .. "/" .. norns.script.shortname .. "_state.pset")
+      params:read("/home/we/dust/data/form_without_matter/form_without_matter_state.pset")
    end   
 
    g_redraw()
@@ -1299,6 +1299,6 @@ end
 function cleanup()
    nb:stop_all()
    if save_on_exit then
-      params:write("/home/we/dust/data/" .. norns.script.shortname .. "/" .. norns.script.shortname .. "_state.pset")
+      params:write("/home/we/dust/data/form_without_matter/form_without_matter_state.pset")
    end
 end

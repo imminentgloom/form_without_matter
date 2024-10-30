@@ -53,6 +53,8 @@ local edit = {
    step = 1
 }
 
+crow_hits = {false, false, false, false}
+
 local active_steps = {}
 
 local trig = {false, false, false, false}
@@ -91,6 +93,7 @@ local trig_pulled = {false, false, false, false}
 local k1_held = false
 
 local crow_trig = true
+local crow_trig_length = 0.0007 -- 0.0007 seems to work reliably with jf
 
 local message = name
 
@@ -262,9 +265,9 @@ function track:hit()
    player = params:lookup_param(self.voice):get_player()
    player:play_note(self.note, self.velocity, self.duration)
    
+
    if crow_trig then
-      -- crow.output[self.number].action = "pulse()"
-      crow.output[self.number]()
+		crow_hits[self.number] = true
    end
 end
 
@@ -292,6 +295,33 @@ function track:get_step(step)
    return state or false
 end
 
+-- crow: communication (postsolarpunk saves the day!)
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+-- sends a recieving function to crow so we can send one table to trigger 4 outputs giving us ~4 x speed
+
+-- sends code to crow: iterate through table, trigger pulse if true
+local function crow_init()
+	for track = 1, 4 do crow.output[track].action = "pulse(" .. crow_trig_length .. ", 10)" end
+	crow[[
+		function process_trigs(mytable)
+			for n = 1, 4 do
+				if mytable[n] then
+					output[n]()
+				end
+			end
+		end
+		]]
+	end
+	
+	-- triggers process_trigs() on crow and empties crow_hits
+	local function crow_send_trigs()
+		crow.process_trigs(crow_hits)
+		for i = 1, 4 do 
+			crow_hits[i] = false
+		end
+	end
+	
 -- utility functions
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
@@ -471,9 +501,11 @@ function init()
       pattern_clear(pattern)
    end   
 
-	for track = 1, 4 do
-		crow.output[track].action = "pulse(0.01, 10)"
-	end
+	-- for track = 1, 4 do
+	-- 	crow.output[track].action = "pulse(0.01, 10)"
+	-- end
+
+	crow_init()
 
    clk_main = clock.run(c_main)
    clk_fps = clock.run(c_fps)
@@ -511,7 +543,7 @@ function c_main()
 					end
 					
 					if not rec[track] and not mute[track] then
-						t[track]:hit()                  
+						t[track]:hit()           
 					end
 				end
 				message = "fill " .. track .. " / " .. fill_rate[#fill_buff]
@@ -522,6 +554,8 @@ function c_main()
 			end	
 		end
 		
+		crow_send_trigs(crow_hits)
+
 		if t[1].substep == 1 then -- tick every 16th step
 			g_redraw()
 		end
@@ -720,10 +754,12 @@ function g.key(x, y, z)
          if z == 1 and rec[col] then
             t[col]:write(1)
             t[col]:hit()
+				crow_send_trigs(crow_hits)
          end
          
          if z == 1 and not rec[col] then
             t[col]:hit()
+				crow_send_trigs(crow_hits)
          end
       end
 

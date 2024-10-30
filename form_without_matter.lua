@@ -2,7 +2,7 @@
 -- 
 --
 -- form without matter
--- v1.0 imminent gloom
+-- v1.1 imminent gloom
 -- 
 --
 -- 
@@ -157,7 +157,7 @@ end
 -- step back through sequence
 function track:dec()
    self.index = self.index - 1
-   if self.index <= self:step_2_index(self.loop_start) then
+   if self.index < self:step_2_index(self.loop_start) then
       self.index = self:step_2_index(self.loop_end) + self.substeps - 1
    end
    
@@ -226,7 +226,7 @@ function track:reset(step)
 
    if not self.forward then
       self.substep = self.substeps
-      self.index = self:step_2_index(self.step) + self.substeps
+      self.index = self:step_2_index(self.step) + self.substeps - 1
    end
 end
 
@@ -263,7 +263,7 @@ function track:hit()
    player:play_note(self.note, self.velocity, self.duration)
    
    if crow_trig then
-      crow.output[self.number].action = "pulse()"
+      -- crow.output[self.number].action = "pulse()"
       crow.output[self.number]()
    end
 end
@@ -418,11 +418,15 @@ function init()
    -- params
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    newline()
-   params:add_separator("form!matter")
+   
+	params:add_separator("form!matter")
    params:add_option("crow", "crow triggers", {"on", "off"}, 1)
    params:set_action("crow", function(x) if x == 1 then crow_trig = true else crow_trig = false end end)
-   newline()
+   
+	newline()
+
    params:add_separator("n.b. et al.")
+
    params:add_group("notes", "notes", 4)
    params:add_number("note_1", "track 1, note:", 0, 127, 1)
    params:set_action("note_1", function (x) t[1].note = x end)
@@ -433,6 +437,7 @@ function init()
    params:add_number("note_4", "track 4, note:", 0, 127, 4)
    params:set_action("note_4", function (x) t[4].note = x end)
    params:add_group("velocity", "velocity", 4)
+
    params:add_number("velocity_1", "track 1, vel:", 0, 4, 1)
    params:set_action("velocity_1", function (x) t[1].velocity = x end)
    params:add_number("velocity_2", "track 2, vel:", 0, 4, 1)
@@ -442,6 +447,7 @@ function init()
    params:add_number("velocity_4", "track 4, vel:", 0, 4, 1)
    params:set_action("velocity_4", function (x) t[4].velocity = x end)
    params:add_group("duration", "duration", 4)
+
    params:add_number("duration_1", "track 1, dur:", 0, 1000, 1)
    params:set_action("duration_1", function (x) t[1].duration = x end)
    params:add_number("duration_2", "track 2, dur:", 0, 1000, 1)
@@ -450,6 +456,7 @@ function init()
    params:set_action("duration_3", function (x) t[3].duration = x end)
    params:add_number("duration_4", "track 4, dur:", 0, 1000, 1)
    params:set_action("duration_4", function (x) t[4].duration = x end)
+
    params:add_separator("")
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    
@@ -463,6 +470,10 @@ function init()
    for pattern = 1, 4 do
       pattern_clear(pattern)
    end   
+
+	for track = 1, 4 do
+		crow.output[track].action = "pulse(0.01, 10)"
+	end
 
    clk_main = clock.run(c_main)
    clk_fps = clock.run(c_fps)
@@ -486,64 +497,61 @@ function c_main()
          if jump_step > #loop_buff then jump_step = 1 end
       end
 
-      for track = 1, 4 do
-         if t[track].forward then
-            t[track]:inc()
-            c_main_core(track)			
-         end
-         
-         if not t[track].forward then
-            c_main_core(track)
-            t[track]:dec()
-         end
-      end
-      
-      g_blink_triggers()
-      
-      if t[1].substep == 1 then -- tick every 16th step
-         g_redraw()
-      end
-   end
-end
+		for track = 1, 4 do
+			if erase and trig[track] then -- erase steps
+				t[track]:write(0)
+			end
+			
+			if fill and trig[track] then -- fill steps
+				local rate = ppqn / 4 / fill_rate[util.clamp(#fill_buff, 0, #fill_rate)]
 
-function c_main_core(track)
-   
-   if retrigger then -- retrigger step
-      if t[track].substep == 1 then
-         if jump_step > #loop_buff then jump_step = 1 end
+				if ((t[track].substep - 1) % rate) + 1 == ((trig_index[track] - 1) % rate) + 1 then
+					if rec[track] then
+						t[track]:write(1)
+					end
+					
+					if not rec[track] and not mute[track] then
+						t[track]:hit()                  
+					end
+				end
+				message = "fill " .. track .. " / " .. fill_rate[#fill_buff]
+			end
+			
+			if t[track].data[t[track].index] == 1 and not mute[track] then -- trigger hit if not muted
+				t[track]:hit()
+			end	
+		end
+		
+		if t[1].substep == 1 then -- tick every 16th step
+			g_redraw()
+		end
+		
+		for track = 1, 4 do
+			g_blink_triggers(track)
+			
+			if t[track].forward then
+				t[track]:inc()
+			end
+			
+			if not t[track].forward then
+				t[track]:dec()
+			end
 
-         if #loop_buff == 1 then
-            t[track]:reset(loop_buff[1].step)
-         end
-         
-         if #loop_buff > 1 then
-            t[track]:reset(loop_buff[jump_step].step)
-         end
-      end
+			if t[track].substep == 1 and t[track].forward or t[track].substep == 24 and not t[track].forward then -- tick every 16th step
+				if retrigger then -- retrigger step
+					if jump_step > #loop_buff then jump_step = 1 end
+					
+					if #loop_buff == 1 then
+						t[track]:reset(loop_buff[1].step)
+					end
+					
+					if #loop_buff > 1 then
+						t[track]:reset(loop_buff[jump_step].step)
+					end
+				end
+			end
+		end
    end
-   
-   if erase and trig[track] then -- erase steps
-      t[track]:write(0)
-   end
-
-   if fill and trig[track] then -- fill steps
-      local rate = ppqn / 4 / fill_rate[util.clamp(#fill_buff, 0, #fill_rate)]
-      
-      if ((t[track].substep - 1) % rate) + 1 == ((trig_index[track] - 1) % rate) + 1 then
-         if rec[track] then
-            t[track]:write(1)
-         end
-         
-         if not rec[track] and not mute[track] then
-            t[track]:hit()                  
-         end
-      end
-      message = "fill " .. track .. " / " .. fill_rate[#fill_buff]
-   end
-   
-   if t[track].data[t[track].index] == 1 and not mute[track] then -- trigger hit if not muted
-      t[track]:hit()
-   end	
 end
 
 function c_fps()
@@ -1147,22 +1155,20 @@ function g_redraw()
    g:refresh()
 end
 
-function g_blink_triggers()
-   for x = 1, 4 do
-      if trig_pulled[x] then
-         g:led(x, 7, br_t_val[x])
-         g:led(x, 8, br_t_val[x])
-         trig_pulled[x] = false
-      end
-      
-      if t[x].data[t[x].index] == 1 and not mute[x] then
-         g:led(x, 7, br_t_h)
-         g:led(x, 8, br_t_h)
-         trig_pulled[x] = true
-      end 
+function g_blink_triggers(track)
+	if trig_pulled[track] then
+		g:led(track, 7, br_t_val[track])
+		g:led(track, 8, br_t_val[track])
+		trig_pulled[track] = false
+	end
+	
+	if t[track].data[t[track].index] == 1 and not mute[track] then
+		g:led(track, 7, br_t_h)
+		g:led(track, 8, br_t_h)
+		trig_pulled[track] = true
+	end 
 
-      g:refresh()
-   end
+	g:refresh()
 end
 
 -- norns: interaction
@@ -1273,14 +1279,14 @@ function redraw()
    
    screen.rect(0, 46, 128, 19)
    screen.fill()
-
+	
    screen.move(0, 40)
    screen.font_size(16)
    screen.text("bpm:")
    screen.move(128, 40)
    screen.font_size(48)
    screen.text_right(params:get("clock_tempo"))   
-
+	
    screen.level(0)
    screen.font_size(16)
    screen.move(123, 59)

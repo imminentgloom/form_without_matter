@@ -19,7 +19,9 @@ enc 2: add(cw) random 16th steps or remove(ccw) steps
 enc 3: add(cw) random substeps or remove(ccw) substeps  
 ```
 ```
-key 1 + enc 1: change the speed limit, 0 = off, 5-10 works for crow depending on bpm, 24 = every 16th  
+key 1 + enc 1: change the speed limit, 0 = off, 5-10 works for crow depending on bpm, 24 = every 16th
+```
+```
 key 2: play/pause  
 key 3: reset
 

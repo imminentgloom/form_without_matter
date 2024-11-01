@@ -2,7 +2,7 @@
 -- 
 --
 -- form without matter
--- v1.2.1 imminent gloom
+-- v1.1 imminent gloom
 -- 
 --
 -- 
@@ -66,6 +66,8 @@ local select = false
 local shift_1 = false
 local shift_2 = false
 local retrigger
+local speed_limit
+local bpm
 
 local seq_play = true
 local halt_step
@@ -79,7 +81,15 @@ local fill_buff = {}
 local shift_buff_1 = {}
 local shift_buff_2 = {}
 
-local fill_rate = {1, 2, 4, 8, 12, 24}
+
+local fill_rate_presets = {
+	fast = {1,2,3,6,12,24},
+	slow = {1,2,3,4,5,6},
+	prime = {1,3,5,7,9,13},
+	user = {1,2,3,6,12,24},
+}
+
+local fill_rate = fill_rate_presets.fast
 
 local ppqn = 96
 
@@ -93,8 +103,10 @@ local trig_pulled = {false, false, false, false}
 local k1_held = false
 
 local crow_trig = true
-local crow_trig_length = 0.0007 -- 0.0007 seems to work reliably with jf
+local crow_trig_length = 0.001 -- 0.0007 seems to work reliably with jf
 
+local big_message
+local big_number
 local message = name
 
 -- Track class
@@ -128,6 +140,9 @@ function track.new()
    sequence.velocity = 1
    sequence.duration = 1
 
+	sequence.last_hit = 0
+	sequence.speed_limit = 0
+
    sequence.data = {}
    for n = 1, 16 * sequence.substeps do
       sequence.data[n] = 0
@@ -155,6 +170,8 @@ function track:inc()
    self.substep = math.floor(((self.index - 1) % self.substeps) + 1)
    
    self.step = self:index_2_step(self.index)
+
+	self:speed_limit_counter()
 end
 
 -- step back through sequence
@@ -171,6 +188,16 @@ function track:dec()
    self.substep = math.floor(((self.index - 1) % self.substeps) + 1)
 
    self.step = self:index_2_step(self.index)
+
+	self:speed_limit_counter()
+end
+
+-- speed limit counter
+function track:speed_limit_counter()
+	self.last_hit = self.last_hit + 1
+	if self.last_hit > self.substeps then
+		self.last_hit = 0
+	end
 end
 
 -- writes value to index OR value to current possition OR inverts current index
@@ -262,13 +289,21 @@ end
 
 -- trigger drum hit
 function track:hit()
-   player = params:lookup_param(self.voice):get_player()
-   player:play_note(self.note, self.velocity, self.duration)
-   
+   -- limit consecutive triggers to preserve stability of other hw
+	-- 0 is no limit, 1-24 = once every 1-24 substeps, 16ths @ 24 
+	if self.last_hit >= self.speed_limit then
 
-   if crow_trig then
-		crow_hits[self.number] = true
-   end
+		-- trigger nb-voice
+		player = params:lookup_param(self.voice):get_player()
+		player:play_note(self.note, self.velocity, self.duration)
+		
+		-- trigger crow
+		if crow_trig then
+			crow_hits[self.number] = true
+		end
+
+		self.last_hit = 0
+	end
 end
 
 -- converts step# to index
@@ -452,7 +487,35 @@ function init()
 	params:add_separator("form!matter")
    params:add_option("crow", "crow triggers", {"on", "off"}, 1)
    params:set_action("crow", function(x) if x == 1 then crow_trig = true else crow_trig = false end end)
-   
+
+	newline()
+
+	params:add_separator("", "adjust to play well w. others")
+	params:add_number("speed_limit", "speed limit", 0, 24, 0)
+	params:set_action("speed_limit", function(x) for track = 1, 4 do t[track].speed_limit = x end end)	
+   params:add_option("fill_rate", "fill rate", {"fast", "slow", "user"}, 1)
+	params:set_action("fill_rate", function(x)
+		if x == 1 then fill_rate = fill_rate_presets.fast end
+		if x == 2 then fill_rate = fill_rate_presets.slow end
+		if x == 3 then fill_rate = fill_rate_presets.user end
+		if x == 3 then params:show("fill_rate_user") else params:hide("fill_rate_user") end
+		_menu.rebuild_params()
+	end)
+	params:add_group("fill_rate_user", "user", 7)
+	params:add_separator("", "fill rate pr. button held")
+	params:add_number("fill_rate_user_1", "1", 1, 24, 1)
+	params:set_action("fill_rate_user_1", function(x) fill_rate_presets.user[1] = x end)
+	params:add_number("fill_rate_user_2", "2", 1, 24, 2)
+	params:set_action("fill_rate_user_2", function(x) fill_rate_presets.user[2] = x end)
+	params:add_number("fill_rate_user_3", "3", 1, 24, 3)
+	params:set_action("fill_rate_user_3", function(x) fill_rate_presets.user[3] = x end)
+	params:add_number("fill_rate_user_4", "4", 1, 24, 4)
+	params:set_action("fill_rate_user_4", function(x) fill_rate_presets.user[4] = x end)
+	params:add_number("fill_rate_user_5", "5", 1, 24, 5)
+	params:set_action("fill_rate_user_5", function(x) fill_rate_presets.user[5] = x end)
+	params:add_number("fill_rate_user_6", "6", 1, 24, 6)
+	params:set_action("fill_rate_user_6", function(x) fill_rate_presets.user[6] = x end)
+
 	newline()
 
    params:add_separator("n.b. et al.")
@@ -495,25 +558,28 @@ function init()
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    params:add_separator("")
    nb:add_player_params()
+	params:bang()
+	bpm = params:get("clock_tempo")
+	speed_limit = params:get("speed_limit")
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    
+	big_message = "bpm:"
+	big_number = bpm
+
+
    for pattern = 1, 4 do
       pattern_clear(pattern)
-   end   
-
-	-- for track = 1, 4 do
-	-- 	crow.output[track].action = "pulse(0.01, 10)"
-	-- end
-
+   end
+	
 	crow_init()
-
+	
    clk_main = clock.run(c_main)
    clk_fps = clock.run(c_fps)
-
+	
    if save_on_exit then
       params:read("/home/we/dust/data/form_without_matter/form_without_matter_state.pset")
    end   
-
+	
    g_redraw()
 end
 
@@ -1215,6 +1281,16 @@ function key(n, z)
       if z == 1 then k1_held = true else k1_held = false end
    end
    
+	if n == 1 then
+		if z == 1 then
+			big_message = "lim:"
+			big_number = speed_limit
+		else
+			big_message = "bpm:"
+			big_number = bpm
+		end
+	end
+
    if n == 2 then -- play
       if z == 1 then
          if seq_play then
@@ -1240,13 +1316,26 @@ function key(n, z)
       message = "reset"
    end
 
-   clock.run(screen_name, 0.5)
+   if z == 0 then
+		clock.run(screen_name, 0.5)
+	end
 end
 
 function enc(n, d)
-   if n == 1 then
+   if n == 1 and not k1_held then
       params:delta("clock_tempo", d)
+		bpm = params:get("clock_tempo")
+		big_number = bpm
+
    end
+
+	if n == 1 and k1_held then
+		d = util.clamp(d, -1, 1)
+		params:delta("speed_limit", d)
+		speed_limit = params:get("speed_limit")
+		big_number = speed_limit
+
+	end
 
    if n == 2 then -- randomize
       for n = 1, d do
@@ -1302,7 +1391,7 @@ function enc(n, d)
          message = "- substep"
       end
    end
-   clock.run(screen_name, 0.5)
+   clock.run(screen_name, 1)
 end
 
 -- norns: screen
@@ -1318,16 +1407,23 @@ function redraw()
 	
    screen.move(0, 40)
    screen.font_size(16)
-   screen.text("bpm:")
+   screen.text(big_message)
    screen.move(128, 40)
    screen.font_size(48)
-   screen.text_right(params:get("clock_tempo"))   
+   screen.text_right(big_number)   
 	
    screen.level(0)
    screen.font_size(16)
    screen.move(123, 59)
    screen.text_right(message)
-   
+
+	-- debug text
+	-- screen.level(15)
+	-- screen.font_size(8)
+	-- screen.move(0, 8)
+	-- screen.text(t[1].last_hit)
+	-- debug end
+
    screen.update()
 end
 

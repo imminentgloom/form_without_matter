@@ -19,22 +19,19 @@ enc 2: add(cw) random 16th steps or remove(ccw) steps
 enc 3: add(cw) random substeps or remove(ccw) substeps  
 ```
 ```
-key 1 + enc 1: speed limit (skips n substeps after each trigger)
-0 = off
-5-10 works for crow depending on bpm
-24 = every 16th
+key 1 + enc 1: speed limit
 ```
 ```
 key 2: play/pause  
 key 3: reset
-
 ```
+
 Controls, grid:
 
 ![form_without_matter](form_without_matter_grid.jpg)
 
 ```
-loop and fill change with number of buttons held.
+loop and fill change with number of buttons held:
 
 fill1-6 + trig:     adds steps if rec is on, plays if off
   loop1 + tracks:   repeats single steps or jumps between held
@@ -46,4 +43,9 @@ fill1-6 + trig:     adds steps if rec is on, plays if off
   clear + shift:    clear all steps
   shift + play:     change playback direction
   shift + pattern:  save pattern
+
+speed limit, skips substeps after each trigger:
+      0 = off
+   5-10 = ok for norns, depending on bpm
+     24 = max, 1 trigger every 16th
 ```

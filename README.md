@@ -45,6 +45,7 @@ fill1-6 + trig:     adds steps if rec is on, plays if off
   shift + pattern:  save pattern
 
 speed limit, skips substeps after each trigger:
+
       0 = off
    5-10 = ok for norns, depending on bpm
      24 = max, 1 trigger every 16th

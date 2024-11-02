@@ -1,3 +1,4 @@
+
 -- 
 -- 
 --
@@ -83,10 +84,10 @@ local shift_buff_2 = {}
 
 
 local fill_rate_presets = {
-	fast = {1,2,3,6,12,24},
-	slow = {1,2,3,4,5,6},
-	prime = {1,3,5,7,9,13},
-	user = {1,2,3,6,12,24},
+   fast = {1,2,3,6,12,24},
+   slow = {1,2,3,4,5,6},
+   prime = {1,3,5,7,9,13},
+   user = {1,2,3,6,12,24},
 }
 
 local fill_rate = fill_rate_presets.fast
@@ -140,8 +141,8 @@ function track.new()
    sequence.velocity = 1
    sequence.duration = 1
 
-	sequence.last_hit = 0
-	sequence.speed_limit = 0
+   sequence.last_hit = 0
+   sequence.speed_limit = 0
 
    sequence.data = {}
    for n = 1, 16 * sequence.substeps do
@@ -171,7 +172,7 @@ function track:inc()
    
    self.step = self:index_2_step(self.index)
 
-	self:speed_limit_counter()
+   self:speed_limit_counter()
 end
 
 -- step back through sequence
@@ -189,15 +190,15 @@ function track:dec()
 
    self.step = self:index_2_step(self.index)
 
-	self:speed_limit_counter()
+   self:speed_limit_counter()
 end
 
 -- speed limit counter
 function track:speed_limit_counter()
-	self.last_hit = self.last_hit + 1
-	if self.last_hit > self.substeps then
-		self.last_hit = 0
-	end
+   self.last_hit = self.last_hit + 1
+   if self.last_hit > self.substeps then
+      self.last_hit = 0
+   end
 end
 
 -- writes value to index OR value to current possition OR inverts current index
@@ -290,20 +291,20 @@ end
 -- trigger drum hit
 function track:hit()
    -- limit consecutive triggers to preserve stability of other hw
-	-- 0 is no limit, 1-24 = once every 1-24 substeps, 16ths @ 24 
-	if self.last_hit >= self.speed_limit then
+   -- 0 is no limit, 1-24 = once every 1-24 substeps, 16ths @ 24 
+   if self.last_hit >= self.speed_limit then
 
-		-- trigger nb-voice
-		player = params:lookup_param(self.voice):get_player()
-		player:play_note(self.note, self.velocity, self.duration)
-		
-		-- trigger crow
-		if crow_trig then
-			crow_hits[self.number] = true
-		end
+      -- trigger nb-voice
+      player = params:lookup_param(self.voice):get_player()
+      player:play_note(self.note, self.velocity, self.duration)
+      
+      -- trigger crow
+      if crow_trig then
+         crow_hits[self.number] = true
+      end
 
-		self.last_hit = 0
-	end
+      self.last_hit = 0
+   end
 end
 
 -- converts step# to index
@@ -337,35 +338,35 @@ end
 
 -- sends code to crow: iterate through table, trigger pulse if true
 local function crow_init()
-	for track = 1, 4 do crow.output[track].action = "pulse(" .. crow_trig_length .. ", 10)" end
-	crow[[
-		function process_trigs(mytable)
-			for n = 1, 4 do
-				if mytable[n] then
-					output[n]()
-				end
-			end
-		end
-		]]
-	end
-	
-	-- triggers process_trigs() on crow and empties crow_hits
-	local function crow_send_trigs()
-		crow.process_trigs(crow_hits)
-		for i = 1, 4 do 
-			crow_hits[i] = false
-		end
-	end
-	
+   for track = 1, 4 do crow.output[track].action = "pulse(" .. crow_trig_length .. ", 10)" end
+   crow[[
+      function process_trigs(mytable)
+         for n = 1, 4 do
+            if mytable[n] then
+               output[n]()
+            end
+         end
+      end
+      ]]
+   end
+   
+   -- triggers process_trigs() on crow and empties crow_hits
+   local function crow_send_trigs()
+      crow.process_trigs(crow_hits)
+      for i = 1, 4 do 
+         crow_hits[i] = false
+      end
+   end
+   
 -- utility functions
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 -- empty lines in params menu
 local line_count = 1
 function newline()
-	params:add_trigger(tostring("void_" .. line_count), "")
-	params:set_action(tostring("void_" .. line_count), function() print("the void whispers back") end)
-	line_count = line_count + 1
+   params:add_trigger(tostring("void_" .. line_count), "")
+   params:set_action(tostring("void_" .. line_count), function() print("the void whispers back") end)
+   line_count = line_count + 1
 end
 
 -- wait one second and put the script name back on screen
@@ -484,39 +485,39 @@ function init()
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    newline()
    
-	params:add_separator("form!matter")
+   params:add_separator("form!matter")
    params:add_option("crow", "crow triggers", {"on", "off"}, 1)
    params:set_action("crow", function(x) if x == 1 then crow_trig = true else crow_trig = false end end)
 
-	newline()
+   newline()
 
-	params:add_separator("", "adjust to play well w. others")
-	params:add_number("speed_limit", "speed limit", 0, 24, 0)
-	params:set_action("speed_limit", function(x) for track = 1, 4 do t[track].speed_limit = x end end)	
+   params:add_separator("", "adjust to play well w. others")
+   params:add_number("speed_limit", "speed limit", 0, 24, 0)
+   params:set_action("speed_limit", function(x) for track = 1, 4 do t[track].speed_limit = x end end)	
    params:add_option("fill_rate", "fill rate", {"fast", "slow", "user"}, 1)
-	params:set_action("fill_rate", function(x)
-		if x == 1 then fill_rate = fill_rate_presets.fast end
-		if x == 2 then fill_rate = fill_rate_presets.slow end
-		if x == 3 then fill_rate = fill_rate_presets.user end
-		if x == 3 then params:show("fill_rate_user") else params:hide("fill_rate_user") end
-		_menu.rebuild_params()
-	end)
-	params:add_group("fill_rate_user", "user", 7)
-	params:add_separator("", "fill rate pr. button held")
-	params:add_number("fill_rate_user_1", "1", 1, 24, 1)
-	params:set_action("fill_rate_user_1", function(x) fill_rate_presets.user[1] = x end)
-	params:add_number("fill_rate_user_2", "2", 1, 24, 2)
-	params:set_action("fill_rate_user_2", function(x) fill_rate_presets.user[2] = x end)
-	params:add_number("fill_rate_user_3", "3", 1, 24, 3)
-	params:set_action("fill_rate_user_3", function(x) fill_rate_presets.user[3] = x end)
-	params:add_number("fill_rate_user_4", "4", 1, 24, 4)
-	params:set_action("fill_rate_user_4", function(x) fill_rate_presets.user[4] = x end)
-	params:add_number("fill_rate_user_5", "5", 1, 24, 5)
-	params:set_action("fill_rate_user_5", function(x) fill_rate_presets.user[5] = x end)
-	params:add_number("fill_rate_user_6", "6", 1, 24, 6)
-	params:set_action("fill_rate_user_6", function(x) fill_rate_presets.user[6] = x end)
+   params:set_action("fill_rate", function(x)
+      if x == 1 then fill_rate = fill_rate_presets.fast end
+      if x == 2 then fill_rate = fill_rate_presets.slow end
+      if x == 3 then fill_rate = fill_rate_presets.user end
+      if x == 3 then params:show("fill_rate_user") else params:hide("fill_rate_user") end
+      _menu.rebuild_params()
+   end)
+   params:add_group("fill_rate_user", "user", 7)
+   params:add_separator("", "fill rate pr. button held")
+   params:add_number("fill_rate_user_1", "1", 1, 24, 1)
+   params:set_action("fill_rate_user_1", function(x) fill_rate_presets.user[1] = x end)
+   params:add_number("fill_rate_user_2", "2", 1, 24, 2)
+   params:set_action("fill_rate_user_2", function(x) fill_rate_presets.user[2] = x end)
+   params:add_number("fill_rate_user_3", "3", 1, 24, 3)
+   params:set_action("fill_rate_user_3", function(x) fill_rate_presets.user[3] = x end)
+   params:add_number("fill_rate_user_4", "4", 1, 24, 4)
+   params:set_action("fill_rate_user_4", function(x) fill_rate_presets.user[4] = x end)
+   params:add_number("fill_rate_user_5", "5", 1, 24, 5)
+   params:set_action("fill_rate_user_5", function(x) fill_rate_presets.user[5] = x end)
+   params:add_number("fill_rate_user_6", "6", 1, 24, 6)
+   params:set_action("fill_rate_user_6", function(x) fill_rate_presets.user[6] = x end)
 
-	newline()
+   newline()
 
    params:add_separator("n.b. et al.")
 
@@ -558,28 +559,28 @@ function init()
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    params:add_separator("")
    nb:add_player_params()
-	params:bang()
-	bpm = params:get("clock_tempo")
-	speed_limit = params:get("speed_limit")
+   params:bang()
+   bpm = params:get("clock_tempo")
+   speed_limit = params:get("speed_limit")
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    
-	big_message = "bpm:"
-	big_number = bpm
+   big_message = "bpm:"
+   big_number = bpm
 
 
    for pattern = 1, 4 do
       pattern_clear(pattern)
    end
-	
-	crow_init()
-	
+   
+   crow_init()
+   
    clk_main = clock.run(c_main)
    clk_fps = clock.run(c_fps)
-	
+   
    if save_on_exit then
-      params:read("/home/we/dust/data/form_without_matter/form_without_matter_state.pset")
+      params:read("/home/we/dust/data/form_without_matter/state.pset")
    end   
-	
+   
    g_redraw()
 end
 
@@ -595,62 +596,62 @@ function c_main()
          if jump_step > #loop_buff then jump_step = 1 end
       end
 
-		for track = 1, 4 do
-			if erase and trig[track] then -- erase steps
-				t[track]:write(0)
-			end
-			
-			if fill and trig[track] then -- fill steps
-				local rate = ppqn / 4 / fill_rate[util.clamp(#fill_buff, 0, #fill_rate)]
+      for track = 1, 4 do
+         if erase and trig[track] then -- erase steps
+            t[track]:write(0)
+         end
+         
+         if fill and trig[track] then -- fill steps
+            local rate = ppqn / 4 / fill_rate[util.clamp(#fill_buff, 0, #fill_rate)]
 
-				if ((t[track].substep - 1) % rate) + 1 == ((trig_index[track] - 1) % rate) + 1 then
-					if rec[track] then
-						t[track]:write(1)
-					end
-					
-					if not rec[track] and not mute[track] then
-						t[track]:hit()           
-					end
-				end
-				message = "fill " .. track .. " / " .. fill_rate[#fill_buff]
-			end
-			
-			if t[track].data[t[track].index] == 1 and not mute[track] then -- trigger hit if not muted
-				t[track]:hit()
-			end	
-		end
-		
-		crow_send_trigs(crow_hits)
+            if ((t[track].substep - 1) % rate) + 1 == ((trig_index[track] - 1) % rate) + 1 then
+               if rec[track] then
+                  t[track]:write(1)
+               end
+               
+               if not rec[track] and not mute[track] then
+                  t[track]:hit()           
+               end
+            end
+            message = "fill " .. track .. " / " .. fill_rate[#fill_buff]
+         end
+         
+         if t[track].data[t[track].index] == 1 and not mute[track] then -- trigger hit if not muted
+            t[track]:hit()
+         end	
+      end
+      
+      crow_send_trigs(crow_hits)
 
-		if t[1].substep == 1 then -- tick every 16th step
-			g_redraw()
-		end
-		
-		for track = 1, 4 do
-			g_blink_triggers(track)
-			
-			if t[track].forward then
-				t[track]:inc()
-			end
-			
-			if not t[track].forward then
-				t[track]:dec()
-			end
+      if t[1].substep == 1 then -- tick every 16th step
+         g_redraw()
+      end
+      
+      for track = 1, 4 do
+         g_blink_triggers(track)
+         
+         if t[track].forward then
+            t[track]:inc()
+         end
+         
+         if not t[track].forward then
+            t[track]:dec()
+         end
 
-			if t[track].substep == 1 and t[track].forward or t[track].substep == 24 and not t[track].forward then -- tick every 16th step
-				if retrigger then -- retrigger step
-					if jump_step > #loop_buff then jump_step = 1 end
-					
-					if #loop_buff == 1 then
-						t[track]:reset(loop_buff[1].step)
-					end
-					
-					if #loop_buff > 1 then
-						t[track]:reset(loop_buff[jump_step].step)
-					end
-				end
-			end
-		end
+         if t[track].substep == 1 and t[track].forward or t[track].substep == 24 and not t[track].forward then -- tick every 16th step
+            if retrigger then -- retrigger step
+               if jump_step > #loop_buff then jump_step = 1 end
+               
+               if #loop_buff == 1 then
+                  t[track]:reset(loop_buff[1].step)
+               end
+               
+               if #loop_buff > 1 then
+                  t[track]:reset(loop_buff[jump_step].step)
+               end
+            end
+         end
+      end
    end
 end
 
@@ -820,12 +821,12 @@ function g.key(x, y, z)
          if z == 1 and rec[col] then
             t[col]:write(1)
             t[col]:hit()
-				crow_send_trigs(crow_hits)
+            crow_send_trigs(crow_hits)
          end
          
          if z == 1 and not rec[col] then
             t[col]:hit()
-				crow_send_trigs(crow_hits)
+            crow_send_trigs(crow_hits)
          end
       end
 
@@ -1011,6 +1012,13 @@ function g_redraw()
          end
       end
    end
+
+   -- could be:
+   -- for y = 1, 4 do
+   -- 	for x = t[y].loop_start, t[y].loop_end do
+   -- 		g:led(x, y, shift_1 and br_seql + br_seq_mod or br_seq_l)
+   -- 	end
+   -- end
 
    -- sequence
    for y = 1, 4 do
@@ -1258,19 +1266,19 @@ function g_redraw()
 end
 
 function g_blink_triggers(track)
-	if trig_pulled[track] then
-		g:led(track, 7, br_t_val[track])
-		g:led(track, 8, br_t_val[track])
-		trig_pulled[track] = false
-	end
-	
-	if t[track].data[t[track].index] == 1 and not mute[track] then
-		g:led(track, 7, br_t_h)
-		g:led(track, 8, br_t_h)
-		trig_pulled[track] = true
-	end 
+   if trig_pulled[track] then
+      g:led(track, 7, br_t_val[track])
+      g:led(track, 8, br_t_val[track])
+      trig_pulled[track] = false
+   end
+   
+   if t[track].data[t[track].index] == 1 and not mute[track] then
+      g:led(track, 7, br_t_h)
+      g:led(track, 8, br_t_h)
+      trig_pulled[track] = true
+   end 
 
-	g:refresh()
+   g:refresh()
 end
 
 -- norns: interaction
@@ -1281,15 +1289,15 @@ function key(n, z)
       if z == 1 then k1_held = true else k1_held = false end
    end
    
-	if n == 1 then
-		if z == 1 then
-			big_message = "lim:"
-			big_number = speed_limit
-		else
-			big_message = "bpm:"
-			big_number = bpm
-		end
-	end
+   if n == 1 then
+      if z == 1 then
+         big_message = "lim:"
+         big_number = speed_limit
+      else
+         big_message = "bpm:"
+         big_number = bpm
+      end
+   end
 
    if n == 2 then -- play
       if z == 1 then
@@ -1317,25 +1325,25 @@ function key(n, z)
    end
 
    if z == 0 then
-		clock.run(screen_name, 0.5)
-	end
+      clock.run(screen_name, 0.5)
+   end
 end
 
 function enc(n, d)
    if n == 1 and not k1_held then
       params:delta("clock_tempo", d)
-		bpm = params:get("clock_tempo")
-		big_number = bpm
+      bpm = params:get("clock_tempo")
+      big_number = bpm
 
    end
 
-	if n == 1 and k1_held then
-		d = util.clamp(d, -1, 1)
-		params:delta("speed_limit", d)
-		speed_limit = params:get("speed_limit")
-		big_number = speed_limit
+   if n == 1 and k1_held then
+      d = util.clamp(d, -1, 1)
+      params:delta("speed_limit", d)
+      speed_limit = params:get("speed_limit")
+      big_number = speed_limit
 
-	end
+   end
 
    if n == 2 then -- randomize
       for n = 1, d do
@@ -1404,25 +1412,25 @@ function redraw()
    
    screen.rect(0, 46, 128, 19)
    screen.fill()
-	
+   
    screen.move(0, 40)
    screen.font_size(16)
    screen.text(big_message)
    screen.move(128, 40)
    screen.font_size(48)
    screen.text_right(big_number)   
-	
+   
    screen.level(0)
    screen.font_size(16)
    screen.move(123, 59)
    screen.text_right(message)
 
-	-- debug text
-	-- screen.level(15)
-	-- screen.font_size(8)
-	-- screen.move(0, 8)
-	-- screen.text(t[1].last_hit)
-	-- debug end
+   -- debug text
+   -- screen.level(15)
+   -- screen.font_size(8)
+   -- screen.move(0, 8)
+   -- screen.text(t[1].last_hit)
+   -- debug end
 
    screen.update()
 end
@@ -1437,6 +1445,6 @@ end
 function cleanup()
    nb:stop_all()
    if save_on_exit then
-      params:write("/home/we/dust/data/form_without_matter/form_without_matter_state.pset")
+      params:write("/home/we/dust/data/form_without_matter/state.pset")
    end
 end

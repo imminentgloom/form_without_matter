@@ -24,7 +24,7 @@ local name = "form!matter"
 local g = grid.connect()
 
 local tab = require("tabutil")
-local nb = include("nb/lib/nb")
+local nb = include("lib/nb/lib/nb")
 
 local save_on_exit = true
 

@@ -577,7 +577,7 @@ function init()
    clk_fps = clock.run(c_fps)
    
    if save_on_exit then
-      params:read(norns.state.path .. "state.pset")
+      params:read(norns.state.data .. "state.pset")
    end   
    
    g_redraw()
@@ -1444,6 +1444,6 @@ end
 function cleanup()
    nb:stop_all()
    if save_on_exit then
-      params:write(norns.state.path .. "state.pset")
+      params:write(norns.state.data .. "state.pset")
    end
 end

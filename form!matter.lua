@@ -2,7 +2,7 @@
 -- 
 --
 -- form without matter
--- v1.0 imminent gloom
+-- v1.1 imminent gloom
 -- 
 --
 -- 
@@ -479,28 +479,49 @@ end
 function init()
    nb:init()
    nb.voice_count = 4
-      
+	
    -- params
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
    newline()
    
    params:add_separator("form!matter")
+	params:add_option("pattern_bank", "pattern: bank", {1, 2, 3, 4}, 1)
+	params:set_action("pattern_bank", function(x) pattern_bank = x end)
+	params:add_trigger("pattern_save", "pattern: save")
+	params:set_action("pattern_save", function() tab.save(p, norns.state.data .. "patterns-" .. pattern_bank) end)
+	params:add_trigger("pattern_load", "pattern: load")
+	params:set_action(
+		"pattern_load",
+		function()
+			if tab.load(norns.state.data .. "patterns-" .. pattern_bank) ~= nil then
+				p = tab.load(norns.state.data .. "patterns-" .. pattern_bank)
+			else
+				print("no patterns to load")
+			end
+		end
+	)
+
+	newline()
+
    params:add_option("crow", "crow triggers", {"on", "off"}, 1)
    params:set_action("crow", function(x) if x == 1 then crow_trig = true else crow_trig = false end end)
+	
+	newline()
 
-   newline()
-
-   params:add_separator("", "adjust to play well w. others")
    params:add_number("speed_limit", "speed limit", 0, 24, 0)
    params:set_action("speed_limit", function(x) for track = 1, 4 do t[track].speed_limit = x end end)	
    params:add_option("fill_rate", "fill rate", {"fast", "slow", "user"}, 1)
-   params:set_action("fill_rate", function(x)
-      if x == 1 then fill_rate = fill_rate_presets.fast end
-      if x == 2 then fill_rate = fill_rate_presets.slow end
-      if x == 3 then fill_rate = fill_rate_presets.user end
-      if x == 3 then params:show("fill_rate_user") else params:hide("fill_rate_user") end
-      _menu.rebuild_params()
-   end)
+   params:set_action(
+		"fill_rate",
+		function(x)
+			if x == 1 then fill_rate = fill_rate_presets.fast end
+			if x == 2 then fill_rate = fill_rate_presets.slow end
+			if x == 3 then fill_rate = fill_rate_presets.user end
+			if x == 3 then params:show("fill_rate_user") else params:hide("fill_rate_user") end
+			_menu.rebuild_params()
+   	end
+	)
    params:add_group("fill_rate_user", "user", 7)
    params:add_separator("", "fill rate pr. button held")
    params:add_number("fill_rate_user_1", "1", 1, 24, 1)
@@ -515,11 +536,11 @@ function init()
    params:set_action("fill_rate_user_5", function(x) fill_rate_presets.user[5] = x end)
    params:add_number("fill_rate_user_6", "6", 1, 24, 6)
    params:set_action("fill_rate_user_6", function(x) fill_rate_presets.user[6] = x end)
-
+	
    newline()
-
+	
    params:add_separator("n.b. et al.")
-
+	
    params:add_group("notes", "notes", 4)
    params:add_number("note_1", "track 1, note:", 0, 127, 1)
    params:set_action("note_1", function (x) t[1].note = x end)
@@ -530,7 +551,7 @@ function init()
    params:add_number("note_4", "track 4, note:", 0, 127, 4)
    params:set_action("note_4", function (x) t[4].note = x end)
    params:add_group("velocity", "velocity", 4)
-
+	
    params:add_number("velocity_1", "track 1, vel:", 0, 4, 1)
    params:set_action("velocity_1", function (x) t[1].velocity = x end)
    params:add_number("velocity_2", "track 2, vel:", 0, 4, 1)
@@ -540,7 +561,7 @@ function init()
    params:add_number("velocity_4", "track 4, vel:", 0, 4, 1)
    params:set_action("velocity_4", function (x) t[4].velocity = x end)
    params:add_group("duration", "duration", 4)
-
+	
    params:add_number("duration_1", "track 1, dur:", 0, 1000, 1)
    params:set_action("duration_1", function (x) t[1].duration = x end)
    params:add_number("duration_2", "track 2, dur:", 0, 1000, 1)
@@ -549,7 +570,7 @@ function init()
    params:set_action("duration_3", function (x) t[3].duration = x end)
    params:add_number("duration_4", "track 4, dur:", 0, 1000, 1)
    params:set_action("duration_4", function (x) t[4].duration = x end)
-
+	
    params:add_separator("")
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    
@@ -558,15 +579,18 @@ function init()
    -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
    params:add_separator("")
    nb:add_player_params()
+
+	newline()
+
    params:bang()
+   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
    bpm = params:get("clock_tempo")
    speed_limit = params:get("speed_limit")
-   -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-   
+
    big_message = "bpm:"
    big_number = bpm
-
-
+	
    for pattern = 1, 4 do
       pattern_clear(pattern)
    end

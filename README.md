@@ -6,7 +6,7 @@
 
 Form, without matter. A drum-sequencer for monome norns and grid.
 
-Supports N.B. et al. (installed to /dust/code/nb) and crow.
+Supports N.B. et al. and crow.
 
 Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the grid or program each substep as desired. Play unquantized. Multiple flavours of entropy on tap. Audio-rate fills. Can genereate a large amount of notes rapidly. Adjust speed limit to achieve desired level of downstream stability. 
 

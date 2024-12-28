@@ -1554,7 +1554,7 @@ function enc(n, d)
       big_message = ""
       big_number = musicutil.note_num_to_name(note, true)
       
-      if select then -- skipt to next active step or next step if none are active
+      if select and not erase then -- skipt to next active step or next step if none are active
          d = util.clamp(d, -1, 1)
          
          local index = t[edit.track]:step_2_index(edit.step) + edit.substep - 1

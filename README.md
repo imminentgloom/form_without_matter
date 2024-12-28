@@ -12,11 +12,28 @@ Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the gr
 
 *form!matter strives to be entropically inclusive.*  
 
+1.2 adds a first pass at note selection, which complicates the interface a bit, and improves interface drawing.
+
 Controls, norns:
 ```
 enc 1: bpm 
-enc 2: add(cw) random 16th steps or remove(ccw) steps  
-enc 3: add(cw) random substeps or remove(ccw) substeps  
+
+enc 2:         add(cw) random 16th steps or remove(ccw) steps  
+enc 2 + shift: add(cw) random substeps or remove(ccw) substeps
+
+enc 2 + select: select track
+
+enc 3 + select: select step (either active steps or next substep)
+
+enc 3:           change selected note
+enc 3 + shift 1: change all notes on step
+enc 3 + shift 2: change all notes on track
+enc 3 + shift 3: change all notes
+
+enc 3 + clear:          reset note
+enc 3 + select + clear: reset all notes on track
+
+(shift, select and clear are on the grid)
 ```
 ```
 key 1 + enc 1: speed limit
@@ -51,3 +68,16 @@ speed limit, skips substeps after each trigger:
    5-10 = ok for norns, depending on bpm
      24 = max, 1 trigger every 16th
 ```
+```
+note editing:
+
+hold select:
+enc 2: 
+
+
+
+
+
+
+```
+

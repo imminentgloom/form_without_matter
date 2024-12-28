@@ -2,7 +2,7 @@
 -- 
 --
 -- form without matter
--- v1.1 imminent gloom
+-- v1.2 imminent gloom
 -- 
 --
 -- 
@@ -24,6 +24,7 @@ local name = "form!matter"
 local g = grid.connect()
 
 local tab = require("tabutil")
+local musicutil = require("musicutil")
 local nb = include("lib/nb/lib/nb")
 
 local save_on_exit = true
@@ -31,12 +32,21 @@ local save_on_exit = true
 t = {} -- hold tracks
 
 local p = { -- holds patterns
+   -- 384 long sequence of substeps
    data = {
       {{},{},{},{}},
       {{},{},{},{}},
       {{},{},{},{}},
       {{},{},{},{}},
    },
+   -- 384 long sequence of notes
+   data_note = {
+      {{},{},{},{}},
+      {{},{},{},{}},
+      {{},{},{},{}},
+      {{},{},{},{}},
+   },
+   -- 16 long sequence of steps
    data_step = {
       {{},{},{},{}},
       {{},{},{},{}},
@@ -50,7 +60,8 @@ local p = { -- holds patterns
 
 local edit = {
    track = 1,
-   step = 1
+   step = 1,
+   substep = 1
 }
 
 crow_hits = {false, false, false, false}
@@ -136,7 +147,7 @@ function track.new()
    sequence.loop_start = 1
    sequence.loop_end = 16
 
-   sequence.note = sequence.number
+   sequence.note = sequence.number2
    sequence.velocity = 1
    sequence.duration = 1
 
@@ -144,8 +155,10 @@ function track.new()
    sequence.speed_limit = 0
 
    sequence.data = {}
+   sequence.data_note = {}
    for n = 1, 16 * sequence.substeps do
       sequence.data[n] = 0
+      sequence.data_note[n] = 0
    end
    
    sequence.data_step = {}
@@ -272,6 +285,7 @@ end
 function track:clear_sequence()
    for index = 1, 16 * self.substeps do
       self:write(0, index)
+      self.data_note[index] = 0
    end
    for n = 1, #active_steps do
       active_steps[n] = nil
@@ -295,7 +309,7 @@ function track:hit()
 
       -- trigger nb-voice
       player = params:lookup_param(self.voice):get_player()
-      player:play_note(self.note, self.velocity, self.duration)
+      player:play_note(self.data_note[self.index] + self.note, self.velocity, self.duration)
       
       -- trigger crow
       if crow_trig then
@@ -368,10 +382,21 @@ function newline()
    line_count = line_count + 1
 end
 
--- wait one second and put the script name back on screen
-local function screen_name(seconds)
+-- wait and put the script name back on screen
+local screen_clk_running = false
+
+local function screen_clk(seconds)
+   screen_clk_running = true
    clock.sleep(seconds)
+   screen_clk_running = false
    message = name
+   big_message = "bpm"
+   big_number = bpm
+end
+
+local function screen_name(seconds)
+   if screen_clk_running then clock.cancel(clk_screen_name) end
+   clk_screen_name = clock.run(screen_clk, seconds)
 end
 
 -- tracks held keys in order, val can be either single value or table with .track and .step
@@ -413,6 +438,7 @@ local function pattern_to_sequence(pattern)
    for track = 1, 4 do
       for index = 1, ppqn * 4 do
          t[track].data[index] = p.data[pattern][track][index]
+         t[track].data_note[index] = p.data_note[pattern][track][index]
       end
 
       for step = 1, 16 do
@@ -436,6 +462,7 @@ local function sequence_to_pattern(pattern)
    for track = 1, 4 do
       for index = 1, ppqn * 4 do
          p.data[pattern][track][index] = t[track].data[index]
+         p.data_note[pattern][track][index] = t[track].data_note[index]
       end
 
       for step = 1, 16 do
@@ -459,6 +486,7 @@ local function pattern_clear(pattern)
    for track = 1, 4 do
       for index = 1, ppqn * 4 do
          p.data[pattern][track][index] = 0
+         p.data_note[pattern][track][index] = 0
       end
 
       for step = 1, 16 do
@@ -506,8 +534,18 @@ function init()
 
    newline()
 
-   params:add_option("crow", "crow triggers", {"on", "off"}, 1)
-   params:set_action("crow", function(x) if x == 1 then crow_trig = true else crow_trig = false end end)
+   params:add_option("crow", "crow triggers", {"off", "on"}, 2)
+   params:set_action(
+      "crow",
+      function(x)
+         if x == 2 then
+            crow_trig = true
+            crow_init()
+         else
+            crow_trig = false
+         end
+      end
+   )
    
    newline()
 
@@ -543,7 +581,7 @@ function init()
    
    params:add_separator("n.b. et al.")
    
-   params:add_group("notes", "notes", 4)
+   params:add_group("notes", "root notes", 4)
    params:add_number("note_1", "track 1, note:", 0, 127, 1)
    params:set_action("note_1", function (x) t[1].note = x end)
    params:add_number("note_2", "track 2, note:", 0, 127, 2)
@@ -552,7 +590,7 @@ function init()
    params:set_action("note_3", function (x) t[3].note = x end)
    params:add_number("note_4", "track 4, note:", 0, 127, 4)
    params:set_action("note_4", function (x) t[4].note = x end)
-      
+   
    params:add_group("velocity", "velocity", 4)
    params:add_control("velocity_1", "track 1, vel:", controlspec.new(0, 4, "lin", 0.01, 1))
    params:set_action("velocity_1", function (x) t[1].velocity = x end)
@@ -597,8 +635,10 @@ function init()
       pattern_clear(pattern)
    end
    
-   crow_init()
-   
+   if crow_trig then
+      crow_init()
+   end
+
    clk_main = clock.run(c_main)
    clk_fps = clock.run(c_fps)
    
@@ -730,19 +770,22 @@ function g.key(x, y, z)
          
          edit.track = y
          edit.step = x
-         
+         edit.substep = 1
+
          if select then
             edit.track = y
             edit.step = x
+            edit.substep = 1
          end
 
          if not shift_1 and not select then
             if t[row]:get_step(col) then
                t[row]:clear_step(col)
+               message = "- step"
             else
                t[row]:write(1, t[row]:step_2_index(col))
+               message = "+ step"
             end
-            message = "edit step"
          end
          
          if erase then
@@ -899,7 +942,13 @@ function g.key(x, y, z)
    -- select
    if row == 6 and col == 15 then
       if z == 1 then select = true else select = false end
-      message = "select step"
+      message = "select"
+   end
+
+   if select then
+      big_message = ""
+      local note = t[edit.track].data_note[t[edit.track]:step_2_index(edit.step) + edit.substep - 1]
+      big_number = musicutil.note_num_to_name(note, true)
    end
 
    -- reset
@@ -955,28 +1004,32 @@ function g.key(x, y, z)
       message = "fill"
    end
 
-   -- step edit
+   -- substep edit
    if (row == 5 or row == 6 or row == 7) and (col >=5 and col <= 12) then
       if z == 1 then
-         local step = t[edit.track]:step_2_index(edit.step)
          local substep = (col - 4) + ((row - 5) * 8)
+         local index = t[edit.track]:step_2_index(edit.step) + substep - 1
+         
+         edit.substep = substep
 
-         if t[edit.track].data[step + substep - 1] == 1 then
-            t[edit.track]:write(0, step + substep - 1)
-            message = "edit substep"
-         else
-            t[edit.track]:write(1, step + substep - 1)
-            message = "edit substep"
+         if not select then
+            if t[edit.track].data[index] == 1 then
+               t[edit.track]:write(0, index)
+               message = "- substep"
+            else
+               t[edit.track]:write(1, index)
+               message = "+ substep"
+            end
          end
 
-         if t[edit.track].data[step + substep - 1] == 1 and erase then
-            t[edit.track]:write(0, step + substep - 1)
+         if t[edit.track].data[index] == 1 and erase then
+            t[edit.track]:write(0, index)
             message = "clear substep"
          end
       end
    end
 
-   if #key_buff == 0 then clock.run(screen_name, 0.15) end
+   if #key_buff == 0 then screen_name(0.15) end
 
    g_redraw()
 end
@@ -1038,13 +1091,6 @@ function g_redraw()
       end
    end
 
-   -- could be:
-   -- for y = 1, 4 do
-   -- 	for x = t[y].loop_start, t[y].loop_end do
-   -- 		g:led(x, y, shift_1 and br_seql + br_seq_mod or br_seq_l)
-   -- 	end
-   -- end
-
    -- sequence
    for y = 1, 4 do
       for x = 1, 16 do
@@ -1091,7 +1137,7 @@ function g_redraw()
       g:led(x, 8, br_t_val[x])
    end
 
-   -- shift_1
+   -- shift_1 (loop)
    for x = 6, 8 do
       if shift_1 then
          g:led(x, 8, br_shift_1 + #shift_buff_1 * 2)
@@ -1228,7 +1274,34 @@ function g_redraw()
       end
    end
 
-   -- step edit
+   -- step edit: blink selection
+   do
+      local track = edit.track
+      local step = edit.step
+      local edit = t[track]
+      
+      if edit.data_step[step] == 0 then
+         if select then
+            if edit.step < edit.loop_start or edit.step > edit.loop_end then
+               g:led(step, track, br_seq_l + br_sel_mod - frame_anim)
+            else
+               g:led(step, track, br_seq_l + br_sel_mod - frame_anim)
+            end
+         else
+            if edit.step < edit.loop_start or edit.step > edit.loop_end then
+               g:led(step, track, br_seq_l - math.floor(frame_anim / 3))
+            else
+               g:led(step, track, br_seq_l - math.floor(frame_anim / 3))
+            end
+         end
+      end
+      
+      if edit.data_step[step] == 1 then
+         g:led(step, track, br_seq_a - frame_anim)
+      end
+   end
+   
+   -- substep edit
    for y = 5, 7 do
       for x = 5, 12 do
          local substep = (x - 4) + ((y - 5) * 8)
@@ -1251,33 +1324,20 @@ function g_redraw()
       end
    end
 
-   -- step edit: blink selection
+   -- substep edit: blink selection
    do
-      local track = edit.track
-      local step = edit.step
-      local edit = t[track]
+      local x = (((edit.substep - 1) % 8) + 1) + 4
+      local y = math.floor((edit.substep - 1) / 8) + 5
+      local index = t[edit.track]:step_2_index(edit.step) + edit.substep - 1
 
-      if edit.data_step[step] == 0 then
-         if select then
-            if edit.step < edit.loop_start or edit.step > edit.loop_end then
-               g:led(step, track, br_seq_l + br_sel_mod - frame_anim)
-            else
-               g:led(step, track, br_seq_l + br_sel_mod - frame_anim)
-            end
-         else
-            if edit.step < edit.loop_start or edit.step > edit.loop_end then
-               g:led(step, track, br_seq_l - math.floor(frame_anim / 3))
-            else
-               g:led(step, track, br_seq_l - math.floor(frame_anim / 3))
-            end
-         end
+      if t[edit.track].data[index] == 1 then
+         g:led(x, y, br_seq_a - frame_anim)
+      else
+         g:led(x, y, br_seq_l - math.floor(frame_anim / 3))
       end
-
-      if edit.data_step[step] == 1 then
-         g:led(step, track, br_seq_a - frame_anim)
-      end
+      
    end
-   
+
    -- tracers
    for y = 1, 4 do
       if edit.track == y and edit.step == t[y].step then -- blink tracer on edited step
@@ -1306,10 +1366,11 @@ function g_blink_triggers(track)
    g:refresh()
 end
 
--- norns: interaction
+-- norns: keys
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 function key(n, z)
+
    if n == 1 then
       if z == 1 then k1_held = true else k1_held = false end
    end
@@ -1323,7 +1384,7 @@ function key(n, z)
          big_number = bpm
       end
    end
-
+   
    if n == 2 then -- play
       if z == 1 then
          if seq_play then
@@ -1348,83 +1409,209 @@ function key(n, z)
       halt_step = 1
       message = "reset"
    end
-
+   
    if z == 0 then
-      clock.run(screen_name, 0.5)
+      screen_name(0.5)
    end
 end
 
+-- norns: encoders
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
 function enc(n, d)
+
    if n == 1 and not k1_held then
       params:delta("clock_tempo", d)
       bpm = params:get("clock_tempo")
       big_number = bpm
-
+      
    end
-
+   
    if n == 1 and k1_held then
       d = util.clamp(d, -1, 1)
       params:delta("speed_limit", d)
       speed_limit = params:get("speed_limit")
       big_number = speed_limit
-
    end
-
-   if n == 2 then -- randomize
-      for n = 1, d do
-         if d > 0 then -- add step to random 16th
-            for brute_force = 1, 64 do            
-               local track = random_track_if_rec()
-               local step = math.random(16)
-               local index = t[track]:step_2_index(step)
-               if t[track].data_step[step] == 0 then
-                  t[track]:write(1, index)
+   
+   if n == 2 then
+      if not select then -- randomize
+         if  #shift_buff_2 == 0 then
+            for n = 1, d do
+               if d > 0 then -- add step to random 16th
+                  for brute_force = 1, 64 do            
+                     local track = random_track_if_rec()
+                     local step = math.random(16)
+                     local index = t[track]:step_2_index(step)
+                     if t[track].data_step[step] == 0 then
+                        t[track]:write(1, index)
+                     end
+                     edit.track = track
+                     edit.step = step
+                     edit.substep = 1
+                     break
+                  end   
+                  message = "+ step"    
+               end 
+            end
+            
+            if d < 0 then -- remove last step (either programed or random)
+               for n = 1, math.abs(d) do
+                  if #active_steps > 0 then
+                     local track = t[active_steps[#active_steps].track]
+                     local step = track:index_2_step(active_steps[#active_steps].index)
+                     track:clear_step(step)
+                  end
                end
-               edit.track = track
-               edit.step = step
-               break
-            end   
-            message = "+ step"    
-         end 
-      end
+               message = "- step"
+            end
+         end
 
-      if d < 0 then -- remove last step (either programed or random)
-         for n = 1, math.abs(d) do
+         if #shift_buff_2 > 0 then
+            for n = 1, d do
+               if d > 0 then -- add step to random substep
+                  for brute_force = 1, 4 * 384 do
+                     local track = random_track_if_rec()
+                     local index = math.random(384)
+                     if t[track].data[index] == 0 then
+                        t[track]:write(1, index)
+                     end
+                     edit.track = track
+                     edit.step = t[track]:index_2_step(index)
+                     edit.substep = ((index - 1) % 24) + 1
+                     break
+                  end       
+                  message = "+ substep"
+               end 
+            end
+         end
+
+         if d < 0 then -- remove last step (either programed or random)
             if #active_steps > 0 then
                local track = t[active_steps[#active_steps].track]
-               local step = track:index_2_step(active_steps[#active_steps].index)
-               track:clear_step(step)
+               local index = active_steps[#active_steps].index
+               track:write(0, index)
             end
+            message = "- substep"
          end
-         message = "- step"
+      end
+   
+      if select then -- skipt to next active step or next step if none are active
+         d = util.clamp(d, -1, 1)
+         edit.track = ((edit.track - 1 + d) % 4) + 1
+         message = "track " .. edit.track
       end
    end
 
-   if n == 3 then
-      if d > 0 then -- add step to random substep
-         for brute_force = 1, 4 * 384 do
-            local track = random_track_if_rec()
-            local index = math.random(384)
-            if t[track].data[index] == 0 then
-               t[track]:write(1, index)
-            end
-            edit.track = track
-            edit.step = t[track]:index_2_step(index)
-            break
-         end       
-         message = "+ substep"
-      end 
+   if n == 3 then 
+      local track = edit.track
+      local step = t[track]:step_2_index(edit.step)
+      local index = t[track]:step_2_index(edit.step) + edit.substep - 1
+      local note = t[track].data_note[index] + t[track].note
       
-      if d < 0 then -- remove last step (either programed or random)
-         if #active_steps > 0 then
-            local track = t[active_steps[#active_steps].track]
-            local index = active_steps[#active_steps].index
-            track:write(0, index)
+      if not select then -- edit selected note
+         if #shift_buff_2 == 0 then
+            t[track].data_note[index] = t[track].data_note[index] + d
+            message = "♫: substep"
          end
-         message = "- substep"
+
+         if #shift_buff_2 == 1 then -- edit all notes on step
+            for n = 0, 27 do
+               t[track].data_note[step + n] = t[track].data_note[step + n] + d
+               message = "♫: step"
+            end
+         end
+
+         if #shift_buff_2 == 2 then -- edit all notes in track
+            for n = 1, 384 do
+               t[track].data_note[n] = t[track].data_note[n] + d
+               message = "♫: track"
+            end
+         end
+
+         if #shift_buff_2 == 3 then -- edit all notes
+            for n = 1, 4 do
+               for m = 1, 384 do
+                  t[n].data_note[m] = t[n].data_note[m] + d
+                  message = "♫: all"
+               end
+            end
+         end
+      end
+      
+      if erase then -- reset note
+         t[track].data_note[index] = 0
+         message = "♫ = root"
+      end
+      
+      if erase and select then -- reset all notes on track
+         for index = 1, 384 do
+            t[track].data_note[index] = 0
+            message = "♫ = tr.root"
+         end
+      end
+      
+      big_message = ""
+      big_number = musicutil.note_num_to_name(note, true)
+      
+      if select then -- skipt to next active step or next step if none are active
+         d = util.clamp(d, -1, 1)
+         
+         local index = t[edit.track]:step_2_index(edit.step) + edit.substep - 1
+         local steps
+         for n = 1, 16 do
+            steps = false
+            if t[edit.track].data_step[n] == 1 then
+               steps = true
+               break
+            end
+         end
+
+         if not steps then
+            if d > 0 then   
+               index = index + 1
+               if index >= 384 then index = 1 end
+               edit.substep = ((index - 1) % 24) + 1
+               edit.step = t[edit.track]:index_2_step(index)
+               message = "step: " .. edit.step .. "." .. edit.substep
+            end
+            
+            if d < 0 then
+               index = index - 1
+               if index < 1 then index = 384 end
+               edit.substep = ((index - 1) % 24) + 1
+               edit.step = t[edit.track]:index_2_step(index)
+               message = "step: " .. edit.step .. "." .. edit.substep
+            end
+         end
+         
+         if steps then
+            if d > 0 then   
+               index = index + 1
+               while t[edit.track].data[index] == 0 do
+                  index = index + 1
+                  if index >= 384 then index = 1 end
+                  edit.substep = ((index - 1) % 24) + 1
+                  edit.step = t[edit.track]:index_2_step(index)
+                  message = "step: " .. edit.step .. "." .. edit.substep
+               end
+            end
+            
+            if d < 0 then
+               index = index - 1
+               while t[edit.track].data[index] == 0 do   
+                  index = index - 1
+                  if index < 1 then index = 384 end
+                  edit.substep = ((index - 1) % 24) + 1
+                  edit.step = t[edit.track]:index_2_step(index)
+                  message = "step: " .. edit.step .. "." .. edit.substep
+               end
+            end
+         end
       end
    end
-   clock.run(screen_name, 1)
+
+   screen_name(1)
 end
 
 -- norns: screen
@@ -1454,7 +1641,7 @@ function redraw()
    -- screen.level(15)
    -- screen.font_size(8)
    -- screen.move(0, 8)
-   -- screen.text(t[1].last_hit)
+   -- screen.text(test or 42)
    -- debug end
 
    screen.update()

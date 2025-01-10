@@ -1,8 +1,9 @@
-# form!matter (readme not updated for 2.0)
+# form!matter
 
 
 ![form_without_matter](screenshot.png)
 
+# (readme not updated for 2.0)
 
 Form, without matter. A drum-sequencer for monome norns and grid.
 

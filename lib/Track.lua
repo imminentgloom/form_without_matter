@@ -8,37 +8,37 @@ Track.__index = Track
 
 -- useage: table[track_number] = Track:new() 
 function Track:new()
-	Track.number = Track.number + 1
+   Track.number = Track.number + 1
    local t = setmetatable({}, Track)
-	t.track = Track.number
-	t.voice = "nb_voice_" .. t.track
+   t.track = Track.number
+   t.voice = "nb_voice_" .. t.track
    t.index = 1
    t.step = 1
    t.substep = 1
-	t.forward = true
+   t.forward = true
    t.root_note = 60
    t.default_velocity = 1.0
    t.default_duration = 1
    t.loop_start = 1
    t.loop_end = 16
    t.gate = {}
-	t.note = {}
-	t.velocity = {}
-	t.duration = {}
-	for index = 1, 384 do
-		t.gate[index] = 0
-		t.note[index] = 0
-		t.velocity[index] = 0
-		t.duration[index] = 0
-	end
-	t.step_status = {}
-	for step = 1, 16 do
-		t.step_status[step] = 0
-	end
+   t.note = {}
+   t.velocity = {}
+   t.duration = {}
+   for index = 1, 384 do
+      t.gate[index] = 0
+      t.note[index] = 0
+      t.velocity[index] = 0
+      t.duration[index] = 0
+   end
+   t.step_status = {}
+   for step = 1, 16 do
+      t.step_status[step] = 0
+   end
    t.last_hit = 0
    t.speed_limit = 0
    t.fill_index = 1
-	return t
+   return t
 end
 
 -- play note, hit drum
@@ -110,12 +110,20 @@ function Track:sort_active_steps()
    end)
 end
 
--- clear entire step
+-- clear entire step (self:write(0) is too slow)
 function Track:clear_step(step)
    step = step or self.step
-   for index = self:get_index(step), self:get_index(step) + 23 do
-      self:write(0, index)
+   for index = self:get_index(step), self:get_index(step, 24) do
+      self.gate[index] = 0
    end
+   self.step_status[step] = 0
+   local T = Track.active_steps
+   for n = 1, #t do
+      if T[n].track == self.track and (T[n].index >= self:get_index(step) or T[n].index <= self:get_index(step, 24)) then
+         table.remove(T, n)
+      end
+   end
+   self:sort_active_steps()  
 end
 
 -- clear entire track
@@ -196,18 +204,18 @@ end
 -- get index for current or chosen step
 function Track:get_step(index)
    index = index or self.index
-	return math.floor((index - 1) / 24) + 1
+   return math.floor((index - 1) / 24) + 1
 end
 
 -- get substep (but not step) for current or chosen index
 function Track:get_substep(index)
    index = index or self.index
-	return ((index - 1) % 24) + 1
+   return ((index - 1) % 24) + 1
 end
 
 -- return true if there are active substeps on current or chosen step
 function Track:get_status(step)
-	step = step or self.step
+   step = step or self.step
    local status = nil
    for substep = 1, 24 do
       if self.gate[(step - 1) * 24 + substep] == 1 then

@@ -1,4 +1,4 @@
-# form!matter
+# form!matter (readme not updated for 2.0)
 
 
 ![form_without_matter](screenshot.png)

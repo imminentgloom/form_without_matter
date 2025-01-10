@@ -121,9 +121,10 @@ end
 -- clear entire track
 function Track:clear_track(track)
    track = track or self.track
-   for index = 1, 384 do
-      self:write(0, index)
-   end
+   for index = 1, 384 do self.gate[index] = 0 end
+   for step = 1, 16 do self.step_status[step] = 0 end
+   for step = 1, #Track.active_steps do Track.active_steps[step] = nil end
+   self:sort_active_steps()  
 end
 
 -- clock +

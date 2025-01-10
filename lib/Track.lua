@@ -118,7 +118,7 @@ function Track:clear_step(step)
    end
    self.step_status[step] = 0
    local T = Track.active_steps
-   for n = 1, #t do
+   for n = 1, #T do
       if T[n].track == self.track and (T[n].index >= self:get_index(step) or T[n].index <= self:get_index(step, 24)) then
          table.remove(T, n)
       end

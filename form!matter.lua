@@ -232,15 +232,15 @@ function init()
    nb.voice_count = 4
    
    t = {}
-	for n = 1, 4 do t[n] = Track:new() end
-	
-	prms:init()
+   for n = 1, 4 do t[n] = Track:new() end
+   
+   prms:init()
 
    clk_main = clock.run(main_clock_event)
    clk_anim = clock.run(anim_clock_event)
    clk_intro = clock.run(intro_clock_event)
    
-	params:read(norns.state.data .. "state.pset")
+   params:read(norns.state.data .. "state.pset")
 
    pattern_check()
 end
@@ -249,7 +249,7 @@ end
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 function g.key(x, y, z) g_ui:key(x, y, z) end
-	
+   
 function key(n, z) n_ui:key(n, z) end
 
 function enc(n, d) n_ui:enc(n, d) end
@@ -260,6 +260,6 @@ function refresh() n_ui:draw_screen() end
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
 
 function cleanup()
-	nb:stop_all()
-	params:write(norns.state.data .. "state.pset")
+   nb:stop_all()
+   params:write(norns.state.data .. "state.pset")
 end

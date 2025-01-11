@@ -119,6 +119,7 @@ function Track:clear_step(step)
    self.step_status[step] = 0
    local T = Track.active_steps
    for n = 1, #T do
+      if T[n] == nil then break end
       if T[n].track == self.track and T[n].step == step then
          table.remove(T, n)
       end

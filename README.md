@@ -48,7 +48,7 @@ mute 1-4:              mute sequence, play is still possible.
 
 trig 1-4:              play note, write if rec is enabled.
 trig 1-4 + clear:      clear notes
-trig 1-4 + fill n/6:   fill track at rates set by ammount of fill held
+trig 1-4 + fill:       fill track at rates set by ammount of fill held
 
 loop 1/3 + sequence:   loops held step, either one or several in order
 loop 2/3 + sequence:   sets loop points for single track. press above or below for single step
@@ -58,7 +58,7 @@ shift (both modes):    shift
 shift 1/3 (note mode): edit velocity
 shift 2/3 (note mode): edit duration
 
-fill 1-8:              hold any n/6 to set fillrate
+fill 1-6/8:            hold to set fillrate
 
 play:                  play/pause
 play + shift:          toggle playback direction

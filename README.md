@@ -13,8 +13,8 @@ Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the gr
 
 *form!matter strives to be entropically inclusive.*  
 
-2.0:  rewrite, added modules for sanity. pattern management on grid, patterns are persistent, edit note/vel/dur  
-1.2:  adds a first pass at note selection, which complicates the interface a bit, and improves interface drawing.  
+2.0: \t rewrite, added modules for sanity. pattern management on grid, patterns are persistent, edit note/vel/dur  
+1.2: \t adds a first pass at note selection, which complicates the interface a bit, and improves interface drawing.  
 
 Controls, norns:
 ```

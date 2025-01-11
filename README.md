@@ -28,15 +28,15 @@ K3: reset
 E1: tempo
 
 normal mode:
-   E2 cw: add random notes every step
-   E3 cw: add random notes anywhere
-   E2/3 ccw: remove notes last first
+E2 cw: add random notes every step
+E3 cw: add random notes anywhere
+E2/3 ccw: remove notes last first
 
 note mode:
-   E2: edit note
-   E2 + shift 1/3: edit velocity 
-   E2 + shift 2/3: edit duration 
-   E3: scroll through active steps
+E2: edit note
+E2 + shift 1/3: edit velocity 
+E2 + shift 2/3: edit duration 
+E3: scroll through active steps
 ```
 ```
 sequence: toggle notes

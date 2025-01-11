@@ -183,9 +183,16 @@ function n_ui:enc(n, d)
       
       -- scroll through active steps by track
       if n == 3 then
+
+         -- sort steps if needed
+         if Track.active_dirty then
+            Track:sort_active_steps()
+            Track.active_dirty = false
+         end
+
          if #Track.ordered_steps > 0 then
             d = util.clamp(d, -1, 1)
-
+          
             -- count/loop
             state.note_pos = state.note_pos + d
             if state.note_pos > #Track.ordered_steps then state.note_pos = 1 end

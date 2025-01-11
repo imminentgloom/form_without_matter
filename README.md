@@ -13,23 +13,68 @@ Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the gr
 
 *form!matter strives to be entropically inclusive.*  
 
-2.0: \t rewrite, added modules for sanity. pattern management on grid, patterns are persistent, edit note/vel/dur  
-1.2: \t adds a first pass at note selection, which complicates the interface a bit, and improves interface drawing.  
+- 2.0: rewrite, added modules for sanity. pattern management on grid, patterns are persistent, edit note/vel/dur  
 
 Controls, norns:
 ```
-
+K1: hold to toggle note mode
+K2: play/pause
+K3: reset
 ```
+```
+normal mode:
+E1: tempo
+E2: add random notes every 16th
+E3: add random notes anywhere
+```
+```
+note mode:
+E1: temop
+E2: edit note
+E2 + shift 1/3: edit velocity 
+E2 + shift 2/3: edit duration 
+E3: scroll through active steps
+```
+
 
 Controls, grid:
-
-![form_without_matter](form_without_matter_grid.jpg)
-
 ```
+n/x = button consists of several keys and changes based on number held
 
+sequence: toggle notes
+substeps: toggle substeps
 
+rec 1-4: disengates controls from track, plays, but does not write
 
+mute 1-4: mute sequence, play is still possible.
 
+trig 1-4: play note, write if rec is enabled.
+trig 1-4 + fill n/6: fill track at rates set by ammount of fill held
+
+loop 1/3 + sequence: loops held step, either one or several in order
+loop 2/3 + sequence: sets loop points for single track. press above or below for single step
+loop 3/3 + sequence: sets loop points for all tracks. press above or below for single step
+
+shift (both modes): shift
+shift 1/3 (note mode): edit velocity
+shift 2/3 (note mode): edit duration
+
+fill 1-8: hold any n/6 to set fillrate
+
+play: play/pause
+play + shift: toggle playback direction
+
+reset: reset
+
+select: choose step and substep(s) to edit
+
+clear + shift: clear sequence
+clear + sequence/substeps: clear steps/substeps
+
+pattern 1-4: load pattern
+pattern 1-4 + shift: save pattern
+pattern 1-4 + clear: clear pattern
+pattern 1-4 + select: pattern bank
 
 
 ```

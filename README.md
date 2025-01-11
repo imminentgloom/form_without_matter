@@ -28,15 +28,15 @@ K3: reset
 E1: tempo
 
 normal mode:
-E2 cw: add random notes every step
-E3 cw: add random notes anywhere
+E2 cw:    add random notes every step
+E3 cw:    add random notes anywhere
 E2/3 ccw: remove notes last first
 
 note mode:
-E2: edit note
+E2:             edit note
 E2 + shift 1/3: edit velocity 
 E2 + shift 2/3: edit duration 
-E3: scroll through active steps
+E3:             scroll through active steps
 ```
 ```
 sequence: toggle notes
@@ -46,20 +46,21 @@ rec 1-4: disengates controls from track, plays, but does not write
 
 mute 1-4: mute sequence, play is still possible.
 
-trig 1-4: play note, write if rec is enabled.
+trig 1-4:            play note, write if rec is enabled.
+trig 1-4 + clear:    clear notes
 trig 1-4 + fill n/6: fill track at rates set by ammount of fill held
 
 loop 1/3 + sequence: loops held step, either one or several in order
 loop 2/3 + sequence: sets loop points for single track. press above or below for single step
 loop 3/3 + sequence: sets loop points for all tracks. press above or below for single step
 
-shift (both modes): shift
+shift (both modes):    shift
 shift 1/3 (note mode): edit velocity
 shift 2/3 (note mode): edit duration
 
 fill 1-8: hold any n/6 to set fillrate
 
-play: play/pause
+play:         play/pause
 play + shift: toggle playback direction
 
 reset: reset

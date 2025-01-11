@@ -1,6 +1,7 @@
 Track = {   
    number = 0,
    active_steps = {},
+   active_dirty = false,
    ordered_steps = {},
 }
 
@@ -81,7 +82,7 @@ function Track:write(gate, index)
 
    -- track active steps
    if gate == 1 then
-      table.insert(Track.active_steps, {track = self.track, index = index})
+      table.insert(Track.active_steps, {track = self.track, step = step, index = index})
    end
 
    -- release as steps are cleared
@@ -94,8 +95,7 @@ function Track:write(gate, index)
       end
    end
 
-   -- build ordered table of active steps
-   self:sort_active_steps()
+   Track.active_dirty = true
 end
 
 -- Sort by "track", then by "index"
@@ -119,11 +119,11 @@ function Track:clear_step(step)
    self.step_status[step] = 0
    local T = Track.active_steps
    for n = 1, #T do
-      if T[n].track == self.track and (T[n].index >= self:get_index(step) or T[n].index <= self:get_index(step, 24)) then
+      if T[n].track == self.track and T[n].step == step then
          table.remove(T, n)
       end
    end
-   self:sort_active_steps()  
+   Track.active_dirty = true
 end
 
 -- clear entire track
@@ -132,7 +132,7 @@ function Track:clear_track(track)
    for index = 1, 384 do self.gate[index] = 0 end
    for step = 1, 16 do self.step_status[step] = 0 end
    for step = 1, #Track.active_steps do Track.active_steps[step] = nil end
-   self:sort_active_steps()  
+   Track.active_dirty = true 
 end
 
 -- clock +
@@ -166,7 +166,7 @@ end
 -- count substeps since last hit
 function Track:speed_limit_counter()
    self.last_hit = self.last_hit + 1
-   if self.last_hit > 23 then
+   if self.last_hit > 24 then
       self.last_hit = 0
    end
 end

@@ -15,28 +15,30 @@ Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the gr
 
 - 2.0: rewrite, added modules for sanity. pattern management on grid, patterns are persistent, edit note/vel/dur  
 
-Controls, norns:
+Controls:
+```
+note: some functions cover several buttons
+      "shift 1/3" means hold any 1 of 3 shift-buttons
+```
 ```
 K1: hold to toggle note mode
 K2: play/pause
 K3: reset
+```
+```
+E1: tempo
 
 normal mode:
-E1: tempo
-E2 cw: add random notes every step
-E3 cw: add random notes anywhere
-E2/3 ccw: remove notes last first
+   E2 cw: add random notes every step
+   E3 cw: add random notes anywhere
+   E2/3 ccw: remove notes last first
 
 note mode:
-E1: temop
-E2: edit note
-E2 + shift 1/3: edit velocity 
-E2 + shift 2/3: edit duration 
-E3: scroll through active steps
+   E2: edit note
+   E2 + shift 1/3: edit velocity 
+   E2 + shift 2/3: edit duration 
+   E3: scroll through active steps
 ```
-
-
-Controls, grid:
 ```
 sequence: toggle notes
 substeps: toggle substeps

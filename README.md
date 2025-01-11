@@ -63,7 +63,7 @@ fill 1-8:              hold any n/6 to set fillrate
 play:                  play/pause
 play + shift:          toggle playback direction
 
-reset: reset
+reset:                 reset
 
 select:                choose step and substep(s) to edit
 

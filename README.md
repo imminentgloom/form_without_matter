@@ -20,14 +20,13 @@ Controls, norns:
 K1: hold to toggle note mode
 K2: play/pause
 K3: reset
-```
-```
+
 normal mode:
 E1: tempo
-E2: add random notes every 16th
-E3: add random notes anywhere
-```
-```
+E2 cw: add random notes every step
+E3 cw: add random notes anywhere
+E2/3 ccw: remove notes last first
+
 note mode:
 E1: temop
 E2: edit note
@@ -39,8 +38,6 @@ E3: scroll through active steps
 
 Controls, grid:
 ```
-n/x = button consists of several keys and changes based on number held
-
 sequence: toggle notes
 substeps: toggle substeps
 

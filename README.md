@@ -14,6 +14,8 @@ Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the gr
 
 - 2.0: rewrite, added modules for sanity. pattern management on grid, patterns are persistent, edit note/vel/dur  
 
+note: best installed from the project manager in maiden, change folder name to "form!matter" if using ;install...
+
 Controls:
 ```
 note:                  some functions cover several buttons

@@ -82,9 +82,6 @@ function main_clock_event()
       for track = 4, 1, -1 do
          local t = t[track]
 
-         -- main count!
-         if t.forward then t:inc() else t:dec() end
-
          -- loop single step or steps in order held
          if t.substep == 1 and t.forward or t.substep == 24 and not t.forward then
             if #state.loop_key_buff == 1 then
@@ -115,6 +112,9 @@ function main_clock_event()
 
          -- hit drum!
          if t.gate[t.index] == 1 and not state.mute[track] then t:hit() end
+
+         -- main count!
+         if t.forward then t:inc() else t:dec() end
       end
       
       -- crow?

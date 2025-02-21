@@ -12,6 +12,7 @@ Four tracks. 96 ppqn. Full access to every substep. Edit steps in time on the gr
 
 *form!matter strives to be entropically inclusive.*  
 
+- 2.0.1: Patterns can also store rec, mute and loop state. Added params to load an initial pattern and control what is loaded with each pattern. Pattern bank is displayed when select is held.
 - 2.0: Rewrite, added modules for sanity. Pattern management on grid, patterns are persistent, edit note/vel/dur. Probably breaks patterns from earlier versions.
 
 *Note: Best installed from the project manager in maiden, change folder name to "form!matter" if using ;install...*
@@ -59,7 +60,9 @@ play:                  play/pause
 play + shift:          toggle playback direction
 reset:                 reset
 select:                choose step and substep(s) to edit
-clear + shift:         clear sequence
+clear + shift 1/3:     clear sequence
+clear + shift 2/3:     clear sequence, reset rec and mute
+clear + shift 3/3:     clear sequence, reset rec, mute and loops
 clear + sequence:      clear steps
 clear + substeps:      clear substeps
 pattern 1-4:           load pattern

@@ -2,7 +2,7 @@
 -- 
 --
 -- form without matter
--- v2.0 imminent gloom
+-- v2.0.1 imminent gloom
 -- 
 --
 -- ↓
@@ -53,6 +53,7 @@ state = {
    note_pos = 1,
 
    pattern_bank = 1,
+   pattern_slot = nil,
    pattern_status = {},
 }
 
@@ -192,8 +193,15 @@ end
 function pattern_save(num)
    local p = {}
    for track = 1, 4 do table.insert(p, t[track]) end
-   table.insert(p, Track.active_steps)
-   table.insert(p, Track.ordered_steps)
+   table.insert(p, Track.active_steps)  -- p[5]
+   table.insert(p, Track.ordered_steps) -- p[6]
+   table.insert(p, state.rec)           -- p[7]
+   table.insert(p, state.mute)          -- p[8]
+   local loop_state = {}
+   for track = 1, 4 do
+      table.insert(loop_state, {t[track].loop_start, t[track].loop_end})
+   end
+   table.insert(p, loop_state)          -- p[9]
    tab.save(p, norns.state.data .. "pattern_slot_" .. num .. "_bank_" .. state.pattern_bank)
    state.pattern_status[num] = "full"
 end
@@ -203,6 +211,23 @@ function pattern_load(num)
    if #p > 0 then
       Track.active_steps = p[5]
       Track.ordered_steps = p[6]
+      if params:get("pattern_rec") == 2 and p[7] ~= nil then  -- skip if old pattern (#p[7/8/9] = 0)
+         state.rec = p[7]
+      end
+      if params:get("pattern_mute") == 2 and p[8] ~= nil then
+         state.mute = p[8]
+      end
+      if params:get("pattern_loop") == 2 and p[9] ~= nil then
+         for track = 1, 4 do
+            t[track].loop_start = p[9][track][1]
+            t[track].loop_end = p[9][track][2]
+         end
+      else
+         for track = 1, 4 do
+            t[track].loop_start = 1
+            t[track].loop_end = 16
+         end
+      end
       for track = 1, 4 do
          for index = 1, 384 do
             t[track].gate[index] = p[track].gate[index]
@@ -215,6 +240,12 @@ function pattern_load(num)
          end
       end
       state.pattern_status[num] = "full"
+      state.pattern_slot = num
+      if params:get("pattern_reset") == 2 then
+         for track = 1, 4 do
+            t[track]:reset()
+         end
+      end
    end
 end
 
@@ -241,6 +272,11 @@ function init()
    clk_intro = clock.run(intro_clock_event)
    
    params:read(norns.state.data .. "state.pset")
+   
+   if params:get("pattern_load") == 2 then
+      state.pattern_bank = params:get("pattern_bank")
+      pattern_load(params:get("pattern_slot"))
+   end
 
    pattern_check()
 end

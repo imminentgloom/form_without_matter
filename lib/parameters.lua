@@ -4,6 +4,8 @@
 local musicutil = require("musicutil")
 local nb        = include(norns.state.shortname .. "/lib/nb/lib/nb")
 
+local state = _G.state
+
 local prms = {
    line_count = 1
 }
@@ -22,7 +24,7 @@ end
 function prms:init()
    params:add_separator("form!matter")
    
-   -- track parameters
+   -- track
    params:add_trigger("heading track", "TRACK")
    for track = 1 , 4 do 
       params:add_group("↳ " .. track, 6)
@@ -36,11 +38,29 @@ function prms:init()
       params:add_number("speed_limit_" .. track, "speed limit:", 0, 24, 0)
       params:set_action("speed_limit_" .. track, function(x) t[track].speed_limit = x end)
    end
+   self:newline()
    
-   params:add_separator("")
-   
-   -- voice parameters
+   -- voice
    nb:add_player_params()
+   
+   -- initial pattern
+   self:newline()
+   params:add_trigger("heading pat. select", "INITIAL PATTERN")
+   params:add_option("pattern_load", "↳ load", {"no", "yes"}, 1)
+   params:add_number("pattern_bank", "↳ bank", 1, 4, 1)
+   params:set_action("pattern_bank", function (x) state.pattern_bank = x end)
+   params:add_number("pattern_slot", "↳ slot", 1, 4, 1)
+   
+   -- pattern load behaviour
+   self:newline()
+   params:add_trigger("heading pat. load", "PATTERN LOAD")
+   params:add_option("pattern_blank", "↳ clear if blank", {"no", "yes"}, 2)
+   params:add_option("pattern_rec", "↳ rec state", {"no", "yes"}, 1)
+   params:add_option("pattern_mute", "↳ mute state", {"no", "yes"}, 1)
+   params:add_option("pattern_loop", "↳ loop state", {"no", "yes"}, 1)
+   params:add_option("pattern_reset", "↳ reset", {"no", "yes"}, 1)
+   
+   -- end
    self:newline()
 end
 

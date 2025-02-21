@@ -220,7 +220,7 @@ function g_ui:key(x, y, z)
             pattern_check()
             state.message = "pat. bank " .. state.pattern_bank
          else
-            state.pattern_current = n
+            state.pattern_slot = n
             if state.shift then
                pattern_save(n)
                state.message = "pat. " .. state.pattern_bank .. ":" .. n .. " save"
@@ -229,9 +229,13 @@ function g_ui:key(x, y, z)
                state.message = "pat. " .. state.pattern_bank .. ":" .. n .. " clear"
             else
                -- clear track as if loading an empty pattern
-               if state.pattern_status[n] == "empty" then 
-                  state.message = "no pattern"
-                  for track = 1, 4 do t[track]:clear_track() end
+               if state.pattern_status[n] == "empty" then
+                  if params:get("pattern_blank") == 2 then
+                     state.message = "no pattern"
+                     for track = 1, 4 do t[track]:clear_track() end
+                  else
+                     state.message = "no pattern"
+                  end
                else
                   pattern_load(n)
                   state.message = "pat. " .. state.pattern_bank .. ":" .. n .. " load"
@@ -307,13 +311,27 @@ function g_ui:key(x, y, z)
    end
    
    -- clear all
-   if state.clear and #state.shift_buff == 1 then
+   if state.clear then
       for track = 1, 4 do
-         t[track]:clear_track()
+         if #state.shift_buff == 1 then
+            t[track]:clear_track()
+            state.message = "clear all"
+         elseif #state.shift_buff == 2 then
+            t[track]:clear_track()
+            state.rec[track] = true
+            state.mute[track] = false
+            state.message = "clear all!"
+         elseif #state.shift_buff == 3 then
+            t[track]:clear_track()
+            state.rec[track] = true
+            state.mute[track] = false
+            t[track]:loop()
+            t[track]:reset(1)
+            state.message = "clear all!!"
+         end
       end
-      state.message = "clear all"
    end
-   
+      
    -- clear loops
    if state.loop and state.clear then
       for track = 1, 4 do
@@ -359,7 +377,8 @@ local loop		       =  4
 local shift		       =  4
 local pattern_empty	 =  0
 local pattern_full	 =  8
-local pattern_current = 12
+local pattern_slot    = 12
+local pattern_bank    = 11
 local play			    = 11
 local stop            =  0
 local reset			    =  9
@@ -443,8 +462,8 @@ function g_ui:draw_step()
    for x = 13, 16 do
       local n = x - 12
       if state.pattern_status[n] == "full" then
-         if state.pattern_current == n then
-            g:led(x, 5, pattern_current)
+         if state.pattern_slot == n then
+            g:led(x, 5, pattern_slot)
          else
             g:led(x, 5, pattern_full)
          end
@@ -469,6 +488,16 @@ function g_ui:draw_step()
       
    -- select
    g:led(15, 6, state.select and select + mod or select)
+   if state.select then
+      for bank = 1, 4 do
+         if state.pattern_bank == bank then
+            g:led(12 + state.pattern_bank, 5, pattern_bank - bank)
+         else
+            g:led(12 + bank, 5, 0)
+         end
+      end
+      
+   end
       
    -- clear
    g:led(16, 6, state.clear and clear - mod or clear)

@@ -34,7 +34,7 @@ function prms:init()
       params:add_number("default_velocity_" .. track, "velocity:", 0, 400, 100, function(x) return x:get("default_velocity_" .. track) * 0.01 end)
       params:set_action("default_velocity_" .. track, function (x) t[track].default_velocity = x * 0.01 end)
       params:add_number("default_duration_" .. track, "duration:", 0, 1000, 1)
-      params:set_action("default_duration_" .. track, function (x) t[track].default_duration = x end)
+      params:set_action("default_duration_" .. track, function (x) t[track].default_duration = x * 0.001 end)
       params:add_number("speed_limit_" .. track, "speed limit:", 0, 24, 0)
       params:set_action("speed_limit_" .. track, function(x) t[track].speed_limit = x end)
    end

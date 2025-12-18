@@ -66,7 +66,7 @@ clear + shift 3/3:     clear sequence, reset rec, mute and loops
 clear + sequence:      clear steps
 clear + substeps:      clear substeps
 pattern 1-4:           load pattern
-pattern 1-4 +          shift: save pattern
+pattern 1-4 + shift:   save pattern
 pattern 1-4 + clear:   clear pattern
 pattern 1-4 + select:  pattern bank
 ```

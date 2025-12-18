@@ -70,5 +70,7 @@ pattern 1-4 +          shift: save pattern
 pattern 1-4 + clear:   clear pattern
 pattern 1-4 + select:  pattern bank
 ```
+![ ](form_without_matter_grid.jpg)
+
 Pattern: Each pattern is saved in its own file called pattern_slot_num_bank_num in data/form!matter. Back up by copying them elsewhere.
 

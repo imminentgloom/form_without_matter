@@ -50,7 +50,7 @@ function Track:hit()
 
       -- trigger nb-voice
       player = params:lookup_param(self.voice):get_player()
-      player:play_note(self.note[self.index] + self.root_note, self.velocity[self.index] + self.default_velocity, self.duration[self.index] + self.default_duration)
+      player:play_note(self.note[self.index] + self.root_note, self.velocity[self.index] + self.default_velocity, (self.duration[self.index] + self.default_duration * 0,001))
       
       -- trigger crow (for later)
       
